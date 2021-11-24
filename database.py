@@ -97,6 +97,28 @@ class Database:
         finally:
             cursor.close()
 
+    def remove_school(self):
+        logger = self.logger
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+        try:
+            get_students = f'SELECT * FROM {school}'
+            cursor.execute(get_students)
+
+            for student in cursor.fetchall():
+                self.remove_student(student[1])
+
+            remove_school = f'DROP TABLE {school}'
+            cursor.execute(remove_school)
+
+            logger.info(f'Школа \'{school}\' успешно удалена')
+        except (Exception, Error) as error:
+            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+        finally:
+            cursor.close()
+
     def add_student(self, full_name, class_name):
         logger = self.logger
         connection = self.connection
@@ -126,14 +148,14 @@ class Database:
             # Выполнение команды: это создает новую таблицу
             cursor.execute(create_person_table)
 
-            logger.info("Ученик успешно добавлен")
+            logger.info("Ученик \'{full_name}\' успешно добавлен")
 
         except (Exception, Error) as error:
             logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
         finally:
             cursor.close()
 
-    def remove_student(self, full_name, class_name):
+    def remove_student(self, full_name):
         logger = self.logger
         connection = self.connection
         school = self.school_name
@@ -141,7 +163,7 @@ class Database:
         cursor = connection.cursor()
         try:
             get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
-            cursor.execute(get_student, (full_name, class_name))
+            cursor.execute(get_student)
 
             student_id = cursor.fetchall()[0][0]
 
