@@ -148,7 +148,7 @@ class Database:
             # Выполнение команды: это создает новую таблицу
             cursor.execute(create_person_table)
 
-            logger.info("Ученик \'{full_name}\' успешно добавлен")
+            logger.info(f'Ученик \'{full_name}\' успешно добавлен')
 
         except (Exception, Error) as error:
             logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
@@ -172,6 +172,34 @@ class Database:
             cursor.execute(remove_student)
 
             logger.info(f"Ученик \'{full_name}\' успешно удалён")
+        except (Exception, Error) as error:
+            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+        finally:
+            cursor.close()
+
+    def add_student_mark(self, full_name, date_mark, subject, mark):
+        logger = self.logger
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+        try:
+            logger.debug(f'Добавление оценки \'{full_name}\' {date_mark} {subject} {mark}')
+
+            get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
+            cursor.execute(get_student)
+
+            student_id = cursor.fetchall()[0][0]
+
+            cursor.execute(f'select exists(select 1 from {school}_У{student_id} where id=\'{date_mark}\')')
+
+            if cursor.fetchone()[0]:
+                add_mark = f'UPDATE {school}_У{student_id} SET {subject} = \'{mark}\' WHERE id = \'{date_mark}\''
+            else:
+                add_mark = f'INSERT INTO {school}_У{student_id} (id, {subject}) VALUES (\'{date_mark}\',{mark})'
+            cursor.execute(add_mark)
+
+            logger.debug(f'Оценка успешно добавлена \'{full_name}\' {date_mark} {subject} {mark}')
         except (Exception, Error) as error:
             logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
         finally:
