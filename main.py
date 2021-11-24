@@ -1,24 +1,15 @@
-import psycopg2
 from psycopg2 import Error
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-import logging
+import coloredlogs, logging
+from database import Database
 import os
 
 loginDB = None
 passwordDB = None
 hostDB = 'localhost'
 portDB = '5432'
-school_name = ''
-
-connectionDB = None
+database_name = 'class_book'
 
 logger = logging.getLogger('main')
-
-
-def load_logging():
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    pass
 
 
 def load_environment_variables():
@@ -27,113 +18,8 @@ def load_environment_variables():
     loginDB = os.environ['LOGIN_DB']
     passwordDB = os.environ['PASSWORD_DB']
 
-    logger.debug('Переменные установлены')
-
-
-def load_database():
-    global connectionDB
-
-    logger.debug('Подключение к PostgreSQL')
-
-    try:
-        # Подключение к существующей базе данных
-        connectionDB = psycopg2.connect(user=loginDB,
-                                        # пароль, который указали при установке PostgreSQL
-                                        password=passwordDB,
-                                        host=hostDB,
-                                        port=portDB,
-                                        database='class_book')
-        connectionDB.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-
-        logger.debug('Подключение к PostgreSQL успешно')
-    except (Exception, Error) as error:
-        logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
-
-
-def create_database():
-    logger.debug('Создание базы данных')
-    try:
-        # Подключение к существующей базе данных
-        connection = psycopg2.connect(user=loginDB,
-                                        # пароль, который указали при установке PostgreSQL
-                                        password=passwordDB,
-                                        host=hostDB,
-                                        port=portDB)
-        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-
-        # Курсор для выполнения операций с базой данных
-        cursor = connection.cursor()
-        sql_create_database = 'CREATE DATABASE class_book'
-        cursor.execute(sql_create_database)
-
-        logger.debug('База данных создана')
-    except (Exception, Error) as error:
-        logger.error("Ошибка при создании базы данных", exc_info=error)
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def select_school():
-    global connectionDB, school_name
-    try:
-        logger.info('Введите название школы: ')
-        school_name = 'Кантауровская' #input()
-
-        # Создайте курсор для выполнения операций с базой данных
-        cursor = connectionDB.cursor()
-
-        # SQL-запрос для создания новой таблицы
-        create_table_query = f'''CREATE TABLE IF NOT EXISTS {school_name}
-                              (ID SERIAL NOT NULL,
-                              ФИО TEXT PRIMARY KEY NOT NULL,
-                              Класс TEXT NOT NULL); '''
-        # Выполнение команды: это создает новую таблицу
-        cursor.execute(create_table_query)
-
-        connectionDB.commit()
-
-        logger.info("Подключение успешно")
-
-    except (Exception, Error) as error:
-        logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
-    finally:
-        cursor.close()
-
-
-def add_student():
-    global connectionDB, school_name
-    try:
-        logger.info('Введите полное имя ученика:')
-        name = 'Погудалов Никита Валерьевич' #input()
-        logger.info('Введите класс, в котором обучается ученик:')
-        class_ = '10А физ. мат.' #input()
-
-        cursor = connectionDB.cursor()
-
-        add_person = f""" INSERT INTO {school_name} (ФИО, Класс) VALUES (%s,%s) RETURNING id;"""
-        cursor.execute(add_person, (name, class_))
-        connectionDB.commit()
-
-        student_id = cursor.fetchone()[0]
-
-        create_person_table = f'''CREATE TABLE IF NOT EXISTS {school_name}_У{student_id}
-                              (ID date PRIMARY KEY NOT NULL,
-                              Русский int,
-                              Алгебра int,
-                              Геометрия int,
-                              Физика int,
-                              Информатика int); '''
-        # Выполнение команды: это создает новую таблицу
-        cursor.execute(create_person_table)
-        connectionDB.commit()
-
-        logger.info("Ученик успешно добавлен")
-
-    except (Exception, Error) as error:
-        logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
-    finally:
-        cursor.close()
+    if not loginDB or not passwordDB:
+        logger.error('Логин и пароль для базы данных не установлен')
 
 
 def add_student_mark():
@@ -186,17 +72,18 @@ def add_student_mark():
         cursor.close()
 
 
-def test():
-    global connectionDB
-
-
 if __name__ == '__main__':
-    load_logging()
-    load_environment_variables()
-    #create_database()
-    load_database()
+    coloredlogs.install(level='DEBUG')
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
 
-    select_school()
-    #add_student()
-    add_student_mark()
-    connectionDB.close()
+    load_environment_variables()
+
+    school_name = 'Кантауровская'
+    db = Database(loginDB, passwordDB, database_name, school_name)
+
+    full_name = 'Погудалов Никита Валерьевич'
+    class_name = '10А физ. мат.'
+    db.add_student(full_name, class_name)
+    db.remove_student(full_name, class_name)
+    db.close()
