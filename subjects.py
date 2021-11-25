@@ -21,8 +21,7 @@ def get_10_base():
 
 
 def get_10_math():
-    return f'''{get_10_base()},
-"Прикл. мех." int'''
+    return f'''{get_10_base()}, "Прикл. мех." int'''
 
 
 def get_def_subjects():

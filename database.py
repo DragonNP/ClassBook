@@ -205,3 +205,18 @@ class Database:
             logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
         finally:
             cursor.close()
+
+    def get_subjects(self, full_name):
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+
+        get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
+        cursor.execute(get_student)
+
+        student_id = cursor.fetchall()[0][0]
+
+        get_subjects_request = f'SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name=\'{school}_У{student_id}\''
+        cursor.execute(get_subjects_request)
+        return [i[0] for i in cursor.fetchall() if i[0] != 'id']
