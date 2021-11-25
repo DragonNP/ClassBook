@@ -2,6 +2,8 @@ import logging
 import psycopg2
 from psycopg2 import Error
 
+import subjects
+
 
 class Database:
     logger = logging.getLogger('database')
@@ -126,6 +128,10 @@ class Database:
 
         cursor = connection.cursor()
         try:
+            if subjects.get(class_name) is None:
+                logger.info('Формат класса не верный')
+                return
+
             check_student = f'select exists (select true from {school} where ФИО=\'{full_name}\')'
             cursor.execute(check_student, (full_name, class_name))
 
@@ -139,12 +145,7 @@ class Database:
             student_id = cursor.fetchone()[0]
 
             create_person_table = f'''CREATE TABLE IF NOT EXISTS {school}_У{student_id}
-                                  (ID date PRIMARY KEY NOT NULL,
-                                  Русский int,
-                                  Алгебра int,
-                                  Геометрия int,
-                                  Физика int,
-                                  Информатика int); '''
+                                  (ID date PRIMARY KEY NOT NULL, {subjects.get(class_name)}); '''
             # Выполнение команды: это создает новую таблицу
             cursor.execute(create_person_table)
 
