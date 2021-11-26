@@ -37,10 +37,12 @@ if __name__ == '__main__':
     full_name = 'Погудалов Никита Валерьевич'
     class_name = '10А физ. мат.'
 
-
+    db.add_student_mark(full_name, '24.11.21', 'Алгебра', 5)
+    db.add_student_mark(full_name, '09.11.21', 'Алгебра', 5)
+    db.add_student_mark(full_name, '04.09.21', 'Алгебра', 5)
+    print(db.get_all_marks_by_date(full_name, '04.09.21'))
     #db.add_student(full_name, class_name)
-    print(db.get_subjects(full_name))
-    #db.add_student_mark(full_name, '24.11.21', 'Алгебра', 5)
+    #print(db.get_subjects(full_name))
     #db.remove_student(full_name)
     #db.remove_school()
     #db.close()

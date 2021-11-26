@@ -217,6 +217,69 @@ class Database:
 
         student_id = cursor.fetchall()[0][0]
 
+        return self.get_subjects_by_id(student_id)
+
+    def get_subjects_by_id(self, student_id):
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+
         get_subjects_request = f'SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name=\'{school}_У{student_id}\''
         cursor.execute(get_subjects_request)
         return [i[0] for i in cursor.fetchall() if i[0] != 'id']
+
+    def get_all_marks(self, full_name, subject):
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+
+        get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
+        cursor.execute(get_student)
+
+        student_id = cursor.fetchall()[0][0]
+
+        get_subjects_request = f'SELECT id, {subject} FROM {school}_У{student_id} GROUP BY id'
+        cursor.execute(get_subjects_request)
+        return [i for i in cursor.fetchall()]
+
+    def get_mark_subject_by_date(self, full_name, subject, date):
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+
+        get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
+        cursor.execute(get_student)
+
+        student_id = cursor.fetchall()[0][0]
+
+        get_subjects_request = f'SELECT {subject} FROM {school}_У{student_id} WHERE id=\'{date}\''
+        cursor.execute(get_subjects_request)
+        return [i for i in cursor.fetchall()]
+
+    def get_all_marks_by_date(self, full_name, date):
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+
+        get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
+        cursor.execute(get_student)
+
+        student_id = cursor.fetchall()[0][0]
+
+        get_subjects_request = f'SELECT * FROM {school}_У{student_id} WHERE id=\'{date}\''
+        cursor.execute(get_subjects_request)
+
+        subjects = self.get_subjects_by_id(student_id)
+        row = [i for i in cursor.fetchall()][0]
+        result = {}
+
+        for i in range(1, len(row)):
+            if row[i] is None:
+                continue
+            result[subjects[i-1]] = row[i]
+
+        return result
