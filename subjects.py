@@ -1,6 +1,21 @@
 import re
 
 
+def get_classes():
+    return '10(любой знак) физ. мат., 10(любой знак) база, 9(любой знак)'
+
+
+def check(class_name):
+    if re.match(r"10(?u)\w+ физ. мат.", class_name):
+        return True
+    elif re.match(r"10(?u)\w+ база", class_name):
+        return True
+    elif re.match(r"9(?u)\w+", class_name):
+        return True
+    else:
+        return False
+
+
 def get(class_name):
     if re.match(r"10(?u)\w+ физ. мат.", class_name):
         return get_10_math()

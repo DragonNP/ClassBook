@@ -156,6 +156,24 @@ class Database:
         finally:
             cursor.close()
 
+    def check_student_exists(self, full_name):
+        logger = self.logger
+        connection = self.connection
+        school = self.school_name
+
+        cursor = connection.cursor()
+        try:
+            get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
+            cursor.execute(get_student)
+
+            result = cursor.fetchall()
+            return bool(result)
+
+        except (Exception, Error) as error:
+            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+        finally:
+            cursor.close()
+
     def remove_student(self, full_name):
         logger = self.logger
         connection = self.connection
