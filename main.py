@@ -30,34 +30,34 @@ def edit_marks(db: Database, full_name):
     while True:
         print(f'\n{phrase.select_action()}')
         print(tabulate([['1-Добавить или изменить оценку', '4-Оценки по предмету в конкретный день'],
-                        ['2-Все оценки за день', '5-Назад'],
+                        ['2-Все оценки за день', f'5-{phrase.back()}'],
                         ['3-Все оценки по определённому предмету']]))
         try:
             choice = int(input())
 
             if choice == 1:
                 while True:
-                    print('Введите дату: (1-Назад)', end=' ')
+                    print(f'Введите дату: (1-{phrase.back()})', end=' ')
                     date = input()
 
                     if date == '1':
                         break
 
                     all_subjects = db.get_subjects(full_name)
-                    print(f'Введите предмет:\n{all_subjects}, 1-Назад', end=' ')
+                    print(f'Введите предмет:\n{all_subjects}, 1-{phrase.back()}', end=' ')
                     subject = input()
 
                     if subject == '1':
                         break
                     if not(subject in all_subjects):
-                        print('Введен не правильный предмет')
+                        print(phrase.incorrect_data())
                         continue
 
-                    print(f'Введите оценку: (1-5 - оценка, 6-Назад', end=' ')
+                    print(f'Введите оценку: (1-5 - оценка, 6-{phrase.back()}', end=' ')
                     try:
                         mark = int(input())
                     except ValueError:
-                        print('Не правильный ввод данных.', end=' ')
+                        print(phrase.incorrect_data(), end=' ')
                         continue
                     if mark == '6':
                         break
@@ -68,7 +68,7 @@ def edit_marks(db: Database, full_name):
 
             if choice == 2:
                 while True:
-                    print('Введите дату: (1-Назад)', end=' ')
+                    print(f'Введите дату: (1-{phrase.back()})', end=' ')
                     date = input()
 
                     if date == '1':
@@ -86,13 +86,13 @@ def edit_marks(db: Database, full_name):
             if choice == 3:
                 while True:
                     all_subjects = db.get_subjects(full_name)
-                    print(f'Введите предмет:\n{all_subjects}, 1-Назад', end=' ')
+                    print(f'Введите предмет:\n{all_subjects}, 1-{phrase.back()}', end=' ')
                     subject = input()
 
                     if subject == '1':
                         break
                     if not(subject in all_subjects):
-                        print('Введен не правильный предмет')
+                        print(phrase.incorrect_data())
                         continue
 
                     all_marks = db.get_all_marks(full_name, subject)
@@ -105,16 +105,16 @@ def edit_marks(db: Database, full_name):
             if choice == 4:
                 while True:
                     all_subjects = db.get_subjects(full_name)
-                    print(f'Введите предмет:\n{all_subjects}, 1-Назад', end=' ')
+                    print(f'Введите предмет:\n{all_subjects}, 1-{phrase.back()}', end=' ')
                     subject = input()
 
                     if subject == '1':
                         break
                     if not(subject in all_subjects):
-                        print('Введен не правильный предмет')
+                        print(phrase.incorrect_data())
                         continue
 
-                    print('Введите дату: (1-Назад)', end=' ')
+                    print(f'Введите дату: (1-{phrase.back()})', end=' ')
                     date = input()
 
                     if date == '1':
@@ -133,72 +133,71 @@ def edit_marks(db: Database, full_name):
 def edit_student(db: Database):
     while True:
         print(f'\n{phrase.select_action()}')
-        print(tabulate([['1-Добавить ученика', '3-Удалить ученика'],
-                        ['2-Добавить/Изменить оценку', '4-Назад']]))
+        print(tabulate(phrase.student_menu()))
         try:
             choice = int(input())
 
             if choice == 1:
                 while True:
-                    print('Введите ФИО ученика (1-Назад):', end=' ')
+                    print(phrase.enter_full_name(), end=' ')
                     full_name = input()
 
                     if full_name == '1':
                         break
 
                     if db.check_student_exists(full_name):
-                        print('Ученик уже был добавлен.')
+                        print(phrase.student_already_added())
                         break
 
-                    print(f'Введите класс, в котором обучается ученик ({subjects.get_classes()}) (1-Назад):', end=' ')
+                    print(phrase.enter_class().format(subjects.get_classes()), end=' ')
                     class_name = input()
 
                     if class_name == '1':
                         break
 
                     if not subjects.check(class_name):
-                        print('Не правильный тип класса.', end=' ')
+                        print(phrase.incorrect_data(), end=' ')
                         continue
 
                     db.add_student(full_name, class_name)
-                    print('Отлично, ученик добавлен!')
+                    print(phrase.student_added())
                     break
 
             if choice == 2:
                 while True:
-                    print('Введите ФИО ученика (1-Назад):', end=' ')
+                    print(phrase.enter_full_name(), end=' ')
                     full_name = input()
 
                     if full_name == '1':
                         break
 
                     if not db.check_student_exists(full_name):
-                        print('Ученика не существует.')
-                        continue
+                        print(phrase.student_not_found())
+                        break
 
                     edit_marks(db, full_name)
                     break
 
             if choice == 3:
                 while True:
-                    print(f'Вы уверены? Вы действительно хотите удалить ученика? (Да/Нет):', end=' ')
+                    print(phrase.student_confirm(), end=' ')
                     choice_rm = input()
 
-                    if choice_rm != 'Да':
+                    if choice_rm != phrase.yes():
                         break
 
-                    print('Введите ФИО ученика (1-Назад):', end=' ')
+                    print(phrase.enter_full_name(), end=' ')
                     full_name = input()
 
                     if full_name == '1':
                         break
 
                     if not db.check_student_exists(full_name):
-                        print('Ученик не найден')
+                        print(phrase.student_not_found())
                         break
 
                     db.remove_student(full_name)
-                    print('Ученик успешно удалён!')
+                    print(phrase.student_removed())
                     break
 
             if choice == 4:
@@ -210,12 +209,11 @@ def edit_student(db: Database):
 def run_school(school):
     db = Database(loginDB, passwordDB, database_name, school)
 
-    print(f'\nОтлично, Вы выбрали школу.', end='')
+    print(f'\n{phrase.school()}', end='')
 
     while True:
         print(f'\n{phrase.select_action()}')
-        print(tabulate([['1-Добавить/Редактировать ученика', '3-Назад'],
-                        ['2-Удалить школу']]))
+        print(tabulate(phrase.school_menu()))
         try:
             choice = int(input())
 
@@ -223,16 +221,16 @@ def run_school(school):
                 edit_student(db)
 
             if choice == 2:
-                print(f'Вы уверены? Вы действительно ходите удалить школу \'{school}\'? (Да/Нет):', end=' ')
+                print(phrase.school_confirm().format(school_name), end=' ')
                 choice_rm = input()
 
-                if choice_rm == 'Да':
+                if choice_rm == phrase.yes():
                     db.remove_school()
                     db.close()
-                    print('Школа успешно удалена\nВозврат к началу...')
+                    print(phrase.school_deleted())
                     return
                 else:
-                    print('Школа не была удалена.')
+                    print(phrase.school_not_deleted())
 
             if choice == 3:
                 db.close()
