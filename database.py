@@ -1,14 +1,14 @@
 import logging
 import psycopg2
 from psycopg2 import Error
-
+import urllib.parse as up
 import subjects
 
 
 class Database:
     logger = logging.getLogger('database')
 
-    def __init__(self, login, password, database_name, school_name, host='localhost', port='5432'):
+    def __init__(self, login, password, database_name, school_name, host='localhost', port='5432', url='', useURL=False):
         self.connection = None
         self.school_name = None
         self.database_name = database_name
@@ -17,6 +17,9 @@ class Database:
         self.host = host
         self.port = port
         self.school_name = school_name
+
+        self.url = url
+        self.useURL = useURL
 
         self.create_database()
         self.connect()
@@ -29,12 +32,23 @@ class Database:
         password = self.password
         host = self.host
         port = self.port
+        useURL = self.useURL
 
-        connection = psycopg2.connect(user=login,
-                                      password=password,
-                                      host=host,
-                                      port=port,
-                                      database=database)
+        if useURL:
+            up.uses_netloc.append("postgres")
+            url = up.urlparse(self.url)
+            database = self.database_name = url.path[1:]
+            connection = psycopg2.connect(database=url.path[1:],
+                                          user=url.username,
+                                          password=url.password,
+                                          host=url.hostname,
+                                          port=url.port)
+        else:
+            connection = psycopg2.connect(user=login,
+                                          password=password,
+                                          host=host,
+                                          port=port,
+                                          database=database)
         connection.autocommit = True
 
         cursor = connection.cursor()
@@ -46,7 +60,7 @@ class Database:
             return
 
         cursor = connection.cursor()
-        cursor.execute(f'CREATE DATABASE \'{database}\'')
+        cursor.execute(f'CREATE DATABASE {database}')
         cursor.close()
         connection.close()
 
@@ -59,15 +73,28 @@ class Database:
         password = self.password
         host = self.host
         port = self.port
+        useURL = self.useURL
 
         try:
             logger.debug(f'Попытка подключиться к базе данных \'{database}\'')
             # Подключение к существующей базе данных
-            connection = psycopg2.connect(user=login,
-                                          password=password,
-                                          host=host,
-                                          port=port,
-                                          database=database)
+
+            if useURL:
+                up.uses_netloc.append("postgres")
+                url = up.urlparse(self.url)
+                database = self.database_name = url.path[1:]
+                connection = psycopg2.connect(database=url.path[1:],
+                                              user=url.username,
+                                              password=url.password,
+                                              host=url.hostname,
+                                              port=url.port
+                                              )
+            else:
+                connection = psycopg2.connect(user=login,
+                                              password=password,
+                                              host=host,
+                                              port=port,
+                                              database=database)
             connection.autocommit = True
             self.connection = connection
 
@@ -298,6 +325,6 @@ class Database:
         for i in range(1, len(row)):
             if row[i] is None:
                 continue
-            result[subjects[i-1]] = row[i]
+            result[subjects[i - 1]] = row[i]
 
         return result

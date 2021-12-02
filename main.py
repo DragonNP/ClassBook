@@ -1,5 +1,6 @@
-import coloredlogs
 import logging
+import sys
+
 from tabulate import tabulate
 
 import phrases
@@ -9,21 +10,54 @@ import os
 
 loginDB = None
 passwordDB = None
-hostDB = 'localhost'
-portDB = '5432'
+hostDB = None
+portDB = None
 database_name = 'class_book'
 phrase = None
 logger = logging.getLogger('main')
+useURL = False
+urlDB = None
 
 
-def load_environment_variables():
-    global loginDB, passwordDB
+def load_variables():
+    global loginDB, passwordDB, hostDB, portDB, useURL, urlDB
 
-    loginDB = os.environ['LOGIN_DB']
-    passwordDB = os.environ['PASSWORD_DB']
+    if len(sys.argv) > 1:
+        try:
+            if sys.argv[1].count('URL_DB') == 1:
+                useURL = True
+                urlDB = sys.argv[1].replace('URL_DB=', '')
+                return True
 
-    if not loginDB or not passwordDB:
-        logger.error('Логин и пароль для базы данных не установлен')
+            loginDB = sys.argv[1].replace('LOGIN_DB=', '')
+            passwordDB = sys.argv[2].replace('PASSWORD_DB=', '')
+            hostDB = sys.argv[3].replace('HOST_DB=', '')
+            portDB = sys.argv[4].replace('PORT_DB=', '')
+            return True
+        except:
+            logger.error('Переменные не установлены')
+            return None
+    else:
+        try:
+            if 'LOGIN_DB' in os.environ.keys():
+                loginDB = os.environ['LOGIN_DB']
+            if 'PASSWORD_DB' in os.environ.keys():
+                passwordDB = os.environ['PASSWORD_DB']
+            if 'HOST_DB' in os.environ.keys():
+                hostDB = os.environ['HOST_DB']
+            if 'PORT_DB' in os.environ.keys():
+                portDB = os.environ['PORT_DB']
+            if 'URL_DB' in os.environ.keys():
+                urlDB = os.environ['URL_DB']
+                useURL = True
+            return True
+        except:
+            logger.error('Переменные не установлены')
+            return None
+        finally:
+            if (hostDB is None or portDB is None or loginDB is None or passwordDB is None) and (urlDB is None):
+                logger.error('Переменные не установлены')
+                return None
 
 
 def edit_marks(db: Database, full_name):
@@ -44,16 +78,31 @@ def edit_marks(db: Database, full_name):
                         break
 
                     all_subjects = db.get_subjects(full_name)
-                    print(f'Введите предмет:\n{all_subjects}, 1-{phrase.back()}', end=' ')
+
+                    column = 0
+                    arr = [[], [], []]
+                    for subject in all_subjects:
+                        arr[column].append(subject)
+
+                        if column == 0:
+                            column = 1
+                        elif column == 1:
+                            column = 2
+                        elif column == 2:
+                            column = 0
+                    arr[2].append(f'1-{phrase.back()}')
+
+                    print('Введите предмет:')
+                    print(tabulate(arr))
                     subject = input()
 
                     if subject == '1':
                         break
-                    if not(subject in all_subjects):
+                    if not (subject in all_subjects):
                         print(phrase.incorrect_data())
                         continue
 
-                    print(f'Введите оценку: (1-5 - оценка, 6-{phrase.back()}', end=' ')
+                    print(f'Введите оценку: (1-5 - оценка, 6-{phrase.back()})', end=' ')
                     try:
                         mark = int(input())
                     except ValueError:
@@ -91,7 +140,7 @@ def edit_marks(db: Database, full_name):
 
                     if subject == '1':
                         break
-                    if not(subject in all_subjects):
+                    if not (subject in all_subjects):
                         print(phrase.incorrect_data())
                         continue
 
@@ -110,7 +159,7 @@ def edit_marks(db: Database, full_name):
 
                     if subject == '1':
                         break
-                    if not(subject in all_subjects):
+                    if not (subject in all_subjects):
                         print(phrase.incorrect_data())
                         continue
 
@@ -207,7 +256,10 @@ def edit_student(db: Database):
 
 
 def run_school(school):
-    db = Database(loginDB, passwordDB, database_name, school)
+    if useURL:
+        db = Database(None, None, database_name, school, url=urlDB, useURL=useURL)
+    else:
+        db = Database(loginDB, passwordDB, database_name, school, host=hostDB, port=portDB)
 
     print(f'\n{phrase.school()}', end='')
 
@@ -240,11 +292,17 @@ def run_school(school):
 
 
 if __name__ == '__main__':
-    coloredlogs.install(level='INFO')
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.INFO)
 
-    load_environment_variables()
+    logging.basicConfig(filename='logs.txt',
+                        filemode='a',
+                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    res = load_variables()
+    if res is None:
+        sys.exit(0)
 
     print(f'Please, enter language ({phrases.langs()}):', end=' ')
     lang = input()
