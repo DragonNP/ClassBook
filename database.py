@@ -34,37 +34,42 @@ class Database:
         port = self.port
         useURL = self.useURL
 
-        if useURL:
-            up.uses_netloc.append("postgres")
-            url = up.urlparse(self.url)
-            database = self.database_name = url.path[1:]
-            connection = psycopg2.connect(database=url.path[1:],
-                                          user=url.username,
-                                          password=url.password,
-                                          host=url.hostname,
-                                          port=url.port)
-        else:
-            connection = psycopg2.connect(user=login,
-                                          password=password,
-                                          host=host,
-                                          port=port,
-                                          database=database)
-        connection.autocommit = True
+        logger.debug('Идёт создание базы данных')
 
-        cursor = connection.cursor()
-        cursor.execute("SELECT datname FROM pg_database")
-        list_database = [db_name[0] for db_name in cursor.fetchall()]
+        try:
+            if useURL:
+                up.uses_netloc.append("postgres")
+                url = up.urlparse(self.url)
+                database = self.database_name = url.path[1:]
+                connection = psycopg2.connect(database=url.path[1:],
+                                              user=url.username,
+                                              password=url.password,
+                                              host=url.hostname,
+                                              port=url.port)
+            else:
+                connection = psycopg2.connect(user=login,
+                                              password=password,
+                                              host=host,
+                                              port=port,
+                                              database=database)
+            connection.autocommit = True
 
-        if database in list_database:
-            logger.debug(f'База данных \'{database}\' уже существует')
-            return
+            cursor = connection.cursor()
+            cursor.execute("SELECT datname FROM pg_database")
+            list_database = [db_name[0] for db_name in cursor.fetchall()]
 
-        cursor = connection.cursor()
-        cursor.execute(f'CREATE DATABASE {database}')
-        cursor.close()
-        connection.close()
+            if database in list_database:
+                logger.debug(f'База данных \'{database}\' уже существует')
+                return
 
-        logger.info(f'База данных \'{database}\' создана')
+            cursor = connection.cursor()
+            cursor.execute(f'CREATE DATABASE {database}')
+            cursor.close()
+            connection.close()
+
+            logger.info(f'База данных \'{database}\' создана')
+        except (Exception, Error) as error:
+            logger.error("Ошибка при работе с базой данных", exc_info=error)
 
     def connect(self):
         logger = self.logger
@@ -75,10 +80,8 @@ class Database:
         port = self.port
         useURL = self.useURL
 
+        logger.debug(f'Попытка подключиться к базе данных \'{database}\'')
         try:
-            logger.debug(f'Попытка подключиться к базе данных \'{database}\'')
-            # Подключение к существующей базе данных
-
             if useURL:
                 up.uses_netloc.append("postgres")
                 url = up.urlparse(self.url)
@@ -100,7 +103,7 @@ class Database:
 
             logger.info(f'База данных \'{database}\' успешно подключена')
         except (Exception, Error) as error:
-            logger.error(f'Ошибка при работе с сервером', exc_info=error)
+            logger.error("Ошибка при работе с базой данных", exc_info=error)
 
     def close(self):
         self.connection.close()
@@ -112,8 +115,8 @@ class Database:
         school_name = self.school_name
 
         cursor = connection.cursor()
+        logger.debug(f'Создание таблицы \'{school_name}\'')
         try:
-            logger.debug(f'Создание таблицы \'{school_name}\'')
             create_table_query = f'''CREATE TABLE IF NOT EXISTS {school_name}
                                   (ID SERIAL NOT NULL,
                                   ФИО TEXT PRIMARY KEY NOT NULL,
@@ -122,7 +125,7 @@ class Database:
 
             logger.debug(f'Таблица \'{school_name}\' создана или уже была создана')
         except (Exception, Error) as error:
-            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+            logger.error("Ошибка при работе с базой данных", exc_info=error)
         finally:
             cursor.close()
 
@@ -144,7 +147,7 @@ class Database:
 
             logger.info(f'Школа \'{school}\' успешно удалена')
         except (Exception, Error) as error:
-            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+            logger.error("Ошибка при работе с базой данных", exc_info=error)
         finally:
             cursor.close()
 
@@ -154,32 +157,32 @@ class Database:
         school = self.school_name
 
         cursor = connection.cursor()
+        logger.debug(f'Попытка добавит ученика: \'{full_name}\'')
         try:
-            if subjects.get(class_name) is None:
-                logger.info('Формат класса не верный')
+            if subjects.check(class_name) is None:
+                logger.error('Формат класса не верный')
                 return
 
-            check_student = f'select exists (select true from {school} where ФИО=\'{full_name}\')'
+            check_student = f'select exists (select true from \'{school}\' where ФИО=\'{full_name}\')'
             cursor.execute(check_student, (full_name, class_name))
 
             if cursor.fetchall()[0][0]:
-                logger.info(f'Ученик \'{full_name}\' уже был добавлен')
+                logger.debug(f'Ученик \'{full_name}\' уже был добавлен')
                 return
 
-            add_student = f'INSERT INTO {school} (ФИО, Класс) VALUES (%s,%s) RETURNING id'
+            add_student = f'INSERT INTO \'{school}\' (ФИО, Класс) VALUES (%s,%s) RETURNING id'
             cursor.execute(add_student, (full_name, class_name))
 
             student_id = cursor.fetchone()[0]
 
-            create_person_table = f'''CREATE TABLE IF NOT EXISTS {school}_У{student_id}
+            create_person_table = f'''CREATE TABLE IF NOT EXISTS \'{school}_У{student_id}\'
                                   (ID date PRIMARY KEY NOT NULL, {subjects.get(class_name)}); '''
             # Выполнение команды: это создает новую таблицу
             cursor.execute(create_person_table)
 
             logger.info(f'Ученик \'{full_name}\' успешно добавлен')
-
         except (Exception, Error) as error:
-            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+            logger.error("Ошибка при работе с базой данных", exc_info=error)
         finally:
             cursor.close()
 
@@ -189,13 +192,16 @@ class Database:
         school = self.school_name
 
         cursor = connection.cursor()
+        logger.debug(f'Проверка ученика на существование: {full_name}')
         try:
             get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
             cursor.execute(get_student)
 
             result = cursor.fetchall()
-            return bool(result)
 
+            logger.debug(f'Ученик существутет {full_name}') if bool(result)\
+                else logger.debug(f'Ученик не найден {full_name}')
+            return bool(result)
         except (Exception, Error) as error:
             logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
         finally:
@@ -207,6 +213,7 @@ class Database:
         school = self.school_name
 
         cursor = connection.cursor()
+        logger.debug(f'Попытка удалить ученика: {full_name}')
         try:
             get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
             cursor.execute(get_student)
@@ -229,6 +236,8 @@ class Database:
         school = self.school_name
 
         cursor = connection.cursor()
+        logger.debug(f'Попытка добавить или изменить оценку ученику: ученик=\'{full_name}\', дата={date_mark}, '
+                     f'предмет={subject}, оценка={mark}')
         try:
             logger.debug(f'Добавление оценки \'{full_name}\' {date_mark} {subject} {mark}')
 
@@ -247,16 +256,18 @@ class Database:
 
             logger.debug(f'Оценка успешно добавлена \'{full_name}\' {date_mark} {subject} {mark}')
         except (Exception, Error) as error:
-            logger.error("Ошибка при работе с PostgreSQL", exc_info=error)
+            logger.error("Ошибка при работе с базой данных", exc_info=error)
         finally:
             cursor.close()
 
     def get_subjects(self, full_name):
         connection = self.connection
         school = self.school_name
+        logger = self.logger
+
+        logger.debug(f'Попытка получить все предметы у ученика: \'{full_name}\'')
 
         cursor = connection.cursor()
-
         get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
         cursor.execute(get_student)
 
@@ -267,19 +278,24 @@ class Database:
     def get_subjects_by_id(self, student_id):
         connection = self.connection
         school = self.school_name
+        logger = self.logger
+
+        logger.debug(f'Попытка получить все предметы у ученика: \'{student_id}\'')
 
         cursor = connection.cursor()
-
         get_subjects_request = f'SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name=\'{school}_У{student_id}\''
         cursor.execute(get_subjects_request)
+
         return [i[0] for i in cursor.fetchall() if i[0] != 'id']
 
     def get_all_marks(self, full_name, subject):
         connection = self.connection
         school = self.school_name
+        logger = self.logger
+
+        logger.debug(f'Попытка получить все оценки у ученика: \'{full_name}\', предмет={subject}')
 
         cursor = connection.cursor()
-
         get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
         cursor.execute(get_student)
 
@@ -292,9 +308,11 @@ class Database:
     def get_mark_subject_by_date(self, full_name, subject, date):
         connection = self.connection
         school = self.school_name
+        logger = self.logger
+
+        logger.debug(f'Попытка получить все оценки у ученика: \'{full_name}\', предмет={subject}, дата={date}')
 
         cursor = connection.cursor()
-
         get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
         cursor.execute(get_student)
 
@@ -307,9 +325,11 @@ class Database:
     def get_all_marks_by_date(self, full_name, date):
         connection = self.connection
         school = self.school_name
+        logger = self.logger
+
+        logger.debug(f'Попытка получить все оценки у ученика: \'{full_name}\', дата={date}')
 
         cursor = connection.cursor()
-
         get_student = f'SELECT * FROM {school} WHERE ФИО=\'{full_name}\' LIMIT 1'
         cursor.execute(get_student)
 
