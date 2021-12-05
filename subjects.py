@@ -1,19 +1,22 @@
 import re
 
+rus_letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П',
+                   'Р', 'С', 'Т','У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю', 'Я']
+classes = ['10{} физ. мат.', '10{} база', '9{}']
+
 
 def get_classes():
-    return '10(любой знак) физ. мат., 10(любой знак) база, 9(любой знак)'
+    return ', '.join(name.format('(Буква)') for name in classes)
 
 
-def check(class_name):
-    if re.match(r"10(?u)\w+ физ. мат.", class_name):
-        return True
-    elif re.match(r"10(?u)\w+ база", class_name):
-        return True
-    elif re.match(r"9(?u)\w+", class_name):
-        return True
-    else:
+def check(class_name: str):
+    letter = class_name[2]
+
+    if not letter.upper() in rus_letters:
         return False
+    if class_name in [name.format(letter) for name in classes]:
+        return True
+    return False
 
 
 def get(class_name):

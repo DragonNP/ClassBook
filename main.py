@@ -1,12 +1,11 @@
 import logging
 import sys
-
-from tabulate import tabulate
-
+import os
+import helper
 import phrases
 import subjects
+from tabulate import tabulate
 from database import Database
-import os
 
 loginDB = None
 passwordDB = None
@@ -67,7 +66,14 @@ def edit_marks(db: Database, full_name):
                         ['2-Все оценки за день', f'5-{phrase.back()}'],
                         ['3-Все оценки по определённому предмету']]))
         try:
-            choice = int(input())
+            choice = input()
+
+            if (not choice.isdigit()) or int(choice) > 5:
+                print(phrase.incorrect_data())
+                print()
+                continue
+            else:
+                choice = int(choice)
 
             if choice == 1:
                 while True:
@@ -76,6 +82,10 @@ def edit_marks(db: Database, full_name):
 
                     if date == '1':
                         break
+                    if not helper.check_date(date):
+                        print(phrase.incorrect_date())
+                        print()
+                        continue
 
                     all_subjects = db.get_subjects(full_name)
 
@@ -103,11 +113,15 @@ def edit_marks(db: Database, full_name):
                         continue
 
                     print(f'Введите оценку: (1-5 - оценка, 6-{phrase.back()})', end=' ')
-                    try:
-                        mark = int(input())
-                    except ValueError:
-                        print(phrase.incorrect_data(), end=' ')
+                    mark = input()
+
+                    if not mark.isdigit() or len(mark) != 1 or not (mark in [1, 2, 3, 4, 5, 6]):
+                        print(phrase.incorrect_data())
+                        print()
                         continue
+                    else:
+                        mark = int(mark)
+
                     if mark == '6':
                         break
 
@@ -122,6 +136,10 @@ def edit_marks(db: Database, full_name):
 
                     if date == '1':
                         break
+                    if not helper.check_date(date):
+                        print(phrase.incorrect_date())
+                        print()
+                        continue
 
                     all_marks = db.get_all_marks_by_date(full_name, date)
                     result = ''
@@ -160,7 +178,7 @@ def edit_marks(db: Database, full_name):
                     if subject == '1':
                         break
                     if not (subject in all_subjects):
-                        print(phrase.incorrect_data())
+                        print(phrase.incorrect_date())
                         continue
 
                     print(f'Введите дату: (1-{phrase.back()})', end=' ')
@@ -168,6 +186,10 @@ def edit_marks(db: Database, full_name):
 
                     if date == '1':
                         break
+                    if not helper.check_date(date):
+                        print(phrase.incorrect_data())
+                        print()
+                        continue
 
                     result = db.get_mark_subject_by_date(full_name, subject, date)
                     print(result[0][0])
@@ -184,7 +206,14 @@ def edit_student(db: Database):
         print(f'\n{phrase.select_action()}')
         print(tabulate(phrase.student_menu()))
         try:
-            choice = int(input())
+            choice = input()
+
+            if (not choice.isdigit()) or int(choice) > 4:
+                print(phrase.incorrect_data())
+                print()
+                continue
+            else:
+                choice = int(choice)
 
             if choice == 1:
                 while True:
@@ -205,7 +234,8 @@ def edit_student(db: Database):
                         break
 
                     if not subjects.check(class_name):
-                        print(phrase.incorrect_data(), end=' ')
+                        print(phrase.incorrect_data())
+                        print()
                         continue
 
                     db.add_student(full_name, class_name)
@@ -232,7 +262,7 @@ def edit_student(db: Database):
                     print(phrase.student_confirm(), end=' ')
                     choice_rm = input()
 
-                    if choice_rm != phrase.yes():
+                    if choice_rm.lower() != phrase.yes().lower():
                         break
 
                     print(phrase.enter_full_name(), end=' ')
@@ -256,10 +286,8 @@ def edit_student(db: Database):
 
 
 def run_school(school):
-    if useURL:
-        db = Database(None, None, database_name, school, url=urlDB, useURL=useURL)
-    else:
-        db = Database(loginDB, passwordDB, database_name, school, host=hostDB, port=portDB)
+    db = Database(login=loginDB, password=passwordDB, database_name=database_name, school_name=school,
+                  host=hostDB, port=portDB, url=urlDB, useURL=useURL)
 
     print(f'\n{phrase.school()}', end='')
 
@@ -267,7 +295,14 @@ def run_school(school):
         print(f'\n{phrase.select_action()}')
         print(tabulate(phrase.school_menu()))
         try:
-            choice = int(input())
+            choice = input()
+
+            if (not choice.isdigit()) or int(choice) > 3:
+                print(phrase.incorrect_data())
+                print()
+                continue
+            else:
+                choice = int(choice)
 
             if choice == 1:
                 edit_student(db)
@@ -276,7 +311,7 @@ def run_school(school):
                 print(phrase.school_confirm().format(school_name), end=' ')
                 choice_rm = input()
 
-                if choice_rm == phrase.yes():
+                if choice_rm.lower() == phrase.yes().lower():
                     db.remove_school()
                     db.close()
                     print(phrase.school_deleted())
@@ -292,7 +327,6 @@ def run_school(school):
 
 
 if __name__ == '__main__':
-
     logging.basicConfig(filename='logs.txt',
                         filemode='a',
                         format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
@@ -304,10 +338,17 @@ if __name__ == '__main__':
     if res is None:
         sys.exit(0)
 
-    print(f'Please, enter language ({phrases.langs()}):', end=' ')
-    lang = input()
-    phrase = phrases.Phrases(lang)
+    while True:
+        print(f'Please, enter language ({phrases.get_langs()}):', end=' ')
+        lang = input()
 
+        if phrases.is_lang(lang):
+            phrase = phrases.Phrases(lang)
+            break
+        else:
+            print('Incorrect input\n')
+
+    print()
     print(phrase.start_hello())
 
     while True:
@@ -316,6 +357,10 @@ if __name__ == '__main__':
 
         if school_name == '1':
             break
+        if not helper.is_correct_school_name(school_name):
+            print(phrase.incorrect_data())
+            print()
+            continue
 
         run_school(school_name)
         print('\n')

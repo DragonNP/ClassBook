@@ -1,8 +1,14 @@
 import logging
 
+langs = ['ru', 'en']
 
-def langs():
-    return 'ru, en'
+
+def get_langs():
+    return ', '.join(langs)
+
+
+def is_lang(lang):
+    return lang in langs
 
 
 class Phrases:
@@ -24,9 +30,9 @@ class Phrases:
 
     def enter_school(self):
         if self.lang == 'en':
-            return 'To work, enter the school you want to work with (1-Finish the job):'
+            return 'Enter the school you want to work with (1-Finish the job):'
         elif self.lang == 'ru':
-            return 'Для работы, введите школу, с которой вы хотите работать (1-Завершить работу):'
+            return 'Введите школу, с которой вы хотите работать (1-Завершить работу):'
 
     def select_action(self):
         if self.lang == 'en':
@@ -39,6 +45,12 @@ class Phrases:
             return 'Incorrect data entry'
         elif self.lang == 'ru':
             return 'Неправильный ввод данных'
+
+    def incorrect_date(self):
+        if self.lang == 'en':
+            return 'Invalid date string format. Must be DD.MM.YY'
+        elif self.lang == 'ru':
+            return 'Неверный формат строки даты. Должно быть ДД.ММ.ГГ'
 
     def school(self):
         if self.lang == 'en':
