@@ -88,22 +88,8 @@ def edit_marks(db: Database, full_name):
                         continue
 
                     all_subjects = db.get_subjects(full_name)
-
-                    column = 0
-                    arr = [[], [], []]
-                    for subject in all_subjects:
-                        arr[column].append(subject)
-
-                        if column == 0:
-                            column = 1
-                        elif column == 1:
-                            column = 2
-                        elif column == 2:
-                            column = 0
-                    arr[2].append(f'1-{phrase.back()}')
-
                     print('Введите предмет:')
-                    print(tabulate(arr))
+                    print(helper.formatted_subjects(all_subjects, phrase.back()))
                     subject = input()
 
                     if subject == '1':
@@ -115,7 +101,7 @@ def edit_marks(db: Database, full_name):
                     print(f'Введите оценку: (1-5 - оценка, 6-{phrase.back()})', end=' ')
                     mark = input()
 
-                    if not mark.isdigit() or len(mark) != 1 or not (mark in [1, 2, 3, 4, 5, 6]):
+                    if not mark.isdigit() or len(mark) != 1 or not (mark in ['1', '2', '3', '4', '5', '6']):
                         print(phrase.incorrect_data())
                         print()
                         continue
@@ -153,7 +139,8 @@ def edit_marks(db: Database, full_name):
             if choice == 3:
                 while True:
                     all_subjects = db.get_subjects(full_name)
-                    print(f'Введите предмет:\n{all_subjects}, 1-{phrase.back()}', end=' ')
+                    print('Введите предмет:')
+                    print(helper.formatted_subjects(all_subjects, phrase.back()))
                     subject = input()
 
                     if subject == '1':
@@ -172,13 +159,14 @@ def edit_marks(db: Database, full_name):
             if choice == 4:
                 while True:
                     all_subjects = db.get_subjects(full_name)
-                    print(f'Введите предмет:\n{all_subjects}, 1-{phrase.back()}', end=' ')
+                    print('Введите предмет:')
+                    print(helper.formatted_subjects(all_subjects, phrase.back()))
                     subject = input()
 
                     if subject == '1':
                         break
                     if not (subject in all_subjects):
-                        print(phrase.incorrect_date())
+                        print(phrase.incorrect_data())
                         continue
 
                     print(f'Введите дату: (1-{phrase.back()})', end=' ')
@@ -187,7 +175,7 @@ def edit_marks(db: Database, full_name):
                     if date == '1':
                         break
                     if not helper.check_date(date):
-                        print(phrase.incorrect_data())
+                        print(phrase.incorrect_date())
                         print()
                         continue
 

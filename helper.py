@@ -1,5 +1,6 @@
 import datetime
 import logging
+from tabulate import tabulate
 
 logger = logging.getLogger('helper')
 
@@ -19,3 +20,19 @@ def check_date(date):
     except ValueError:
         logger.debug(f'Не правильный формат даты нужен: {format}')
         return False
+
+
+def formatted_subjects(all_subjects, back_phrase):
+    column = 0
+    arr = [[], [], []]
+    for subject in all_subjects:
+        arr[column].append(subject)
+
+        if column == 0:
+            column = 1
+        elif column == 1:
+            column = 2
+        elif column == 2:
+            column = 0
+    arr[2].append(f'1-{back_phrase}')
+    return tabulate(arr)
