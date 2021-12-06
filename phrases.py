@@ -40,7 +40,7 @@ class Phrases:
         elif self.lang == 'ru':
             return 'Выберите действие'
 
-    def incorrect_data(self):
+    def incorrect_input(self):
         if self.lang == 'en':
             return 'Incorrect data entry'
         elif self.lang == 'ru':

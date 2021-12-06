@@ -5,7 +5,7 @@ from tabulate import tabulate
 logger = logging.getLogger('helper')
 
 
-def is_correct_school_name(name: str):
+def is_school_name(name: str):
     if name.isdigit() or len(name) < 5:
         return False
     return True

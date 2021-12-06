@@ -5,13 +5,13 @@ import urllib.parse as up
 import subjects
 
 
-class Database:
+class ClassBook:
     logger = logging.getLogger('database')
 
-    def __init__(self, login, password, database_name, school_name, host='localhost', port='5432', url='', useURL=False):
+    def __init__(self, login, password, school_name, host='localhost', port='5432', url='', useURL=False):
         self.connection = None
         self.school_name = None
-        self.database_name = database_name
+        self.database_name = 'ClassBook'
         self.login = login
         self.password = password
         self.host = host
