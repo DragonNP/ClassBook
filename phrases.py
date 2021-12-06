@@ -86,7 +86,7 @@ class Phrases:
         if self.lang == 'en':
             return [['1-Add a student', f'3-Delete a student'], ['2-Add/Change mark', f'4-{self.back()}']]
         elif self.lang == 'ru':
-            return [['1-Добавить ученика', '3-Удалить ученика'], ['2-Добавить/Изменить оценку', f'4-{self.back()}']]
+            return [['1-Добавить ученика', '3-Удалить ученика'], ['2-Оценки', f'4-{self.back()}']]
 
     def enter_full_name(self):
         if self.lang == 'en':
@@ -104,7 +104,7 @@ class Phrases:
         if self.lang == 'en':
             return 'Enter the class in which the student is studying ({})'
         elif self.lang == 'ru':
-            return 'Введите класс, в котором обучается ученик ({})' + f' (1-{self.back()}):'
+            return 'Введите класс, в котором обучается ученик ({}' + f', 1-{self.back()}):'
 
     def student_added(self):
         if self.lang == 'en':

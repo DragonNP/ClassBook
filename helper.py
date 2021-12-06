@@ -18,11 +18,21 @@ def check_date(date):
         datetime.datetime.strptime(date, format)
         return True
     except ValueError:
-        logger.debug(f'Не правильный формат даты нужен: {format}')
+        logger.debug(f'Не правильный формат даты, нужен: {format}')
         return False
 
 
-def formatted_subjects(all_subjects, back_phrase):
+def format_date_subject(all_marks):
+    result = ''
+    format = '%d.%m.%y'
+
+    print(all_marks)
+    for mark in all_marks:
+        result += f'{mark[0].strftime(format)}: {mark[1]}\n'
+    return result
+
+
+def format_subjects(all_subjects, back_phrase):
     column = 0
     arr = [[], [], []]
     for subject in all_subjects:

@@ -52,12 +52,12 @@ def basic_config():
     return True
 
 
-def edit_marks(db: ClassBook, full_name):
+def edit_marks(db: ClassBook, full_name: str):
     while True:
         print(f'\n{words.select_action()}')
-        print(tabulate([['1-Добавить или изменить оценку', '4-Оценки по предмету в конкретный день'],
-                        ['2-Все оценки за день', f'5-{words.back()}'],
-                        ['3-Все оценки по определённому предмету']]))
+        print(tabulate([['1-Добавить или изменить оценку', '4-Оценка по предмету в конкретный день'],
+                        ['2-Оценки за день', f'5-{words.back()}'],
+                        ['3-Оценки по определённому предмету']]))
         try:
             choice = input()
 
@@ -82,7 +82,7 @@ def edit_marks(db: ClassBook, full_name):
 
                     all_subjects = db.get_subjects(full_name)
                     print('Введите предмет:')
-                    print(helper.formatted_subjects(all_subjects, words.back()))
+                    print(helper.format_subjects(all_subjects, words.back()))
                     subject = input()
 
                     if subject == '1':
@@ -133,27 +133,25 @@ def edit_marks(db: ClassBook, full_name):
                 while True:
                     all_subjects = db.get_subjects(full_name)
                     print('Введите предмет:')
-                    print(helper.formatted_subjects(all_subjects, words.back()))
+                    print(helper.format_subjects(all_subjects, words.back()))
                     subject = input()
 
                     if subject == '1':
                         break
                     if not (subject in all_subjects):
                         print(words.incorrect_input())
+                        print('!')
                         continue
 
                     all_marks = db.get_all_marks(full_name, subject)
-                    result = ''
-                    for mark in all_marks:
-                        result += f'{mark[0]}: {mark[1]}\n'
-                    print(result)
+                    print(helper.format_date_subject(all_marks))
                     break
 
             if choice == 4:
                 while True:
                     all_subjects = db.get_subjects(full_name)
                     print('Введите предмет:')
-                    print(helper.formatted_subjects(all_subjects, words.back()))
+                    print(helper.format_subjects(all_subjects, words.back()))
                     subject = input()
 
                     if subject == '1':
@@ -266,7 +264,7 @@ def edit_student(db: ClassBook):
             print(words.incorrect_input(), end=' ')
 
 
-def run_school(school):
+def run_school(school: str):
     db = ClassBook(login=loginDB, password=passwordDB, school_name=school,
                    host=hostDB, port=portDB, url=urlDB, useURL=useURL)
 
