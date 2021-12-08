@@ -10,7 +10,12 @@ def get_classes():
 
 
 def check(class_name: str):
-    letter = class_name[2]
+    if len(class_name) > 3:
+        letter = class_name[2]
+    elif len(class_name) == 2:
+        letter = class_name[1]
+    else:
+        return False
 
     if not letter.upper() in rus_letters:
         return False

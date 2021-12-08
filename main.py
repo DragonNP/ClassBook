@@ -52,216 +52,223 @@ def basic_config():
     return True
 
 
+def enter_date():
+    while True:
+        print(f'Введите дату: (1-{words.back()})', end=' ')
+        date = input()
+
+        if date == '1':
+            return date
+        res = helper.check_date(date)
+        if res != '':
+            if res == 'OutOfRange':
+                print('День находится вне диапазона в месяца')
+            else:
+                print(words.incorrect_date())
+            print()
+            continue
+        return date
+
+
+def enter_subject(db: ClassBook, full_name: str):
+    while True:
+        all_subjects = db.get_subjects(full_name)
+        print('Введите предмет:')
+        print(helper.format_subjects(all_subjects, words.back()))
+        subject = input().lower()
+
+        res = False
+        for i in range(len(all_subjects)):
+            if subject == all_subjects[i].lower():
+                subject = all_subjects[i]
+                res = True
+                break
+
+        if subject == '1':
+            return subject
+        if not (res):
+            print(words.incorrect_input())
+            continue
+        return subject
+
+
+def enter_mark():
+    while True:
+        print(f'Введите оценку: (1-5 - оценка, 6-{words.back()})', end=' ')
+        mark = input()
+
+        if not helper.is_mark(mark):
+            print(words.incorrect_input())
+            print()
+            continue
+        return int(mark)
+
+
+def enter_fullname(db: ClassBook, inverse=False):
+    while True:
+        print(words.enter_full_name(), end=' ')
+        fullname = input()
+
+        if fullname == '1':
+            return fullname
+
+        if inverse:
+            if db.check_student_exists(fullname):
+                print(words.student_already_added())
+                continue
+        else:
+            if not db.check_student_exists(fullname):
+                print(words.student_not_found())
+                continue
+        return fullname
+
+
+def enter_class():
+    while True:
+        print(words.enter_class().format(subjects.get_classes()), end=' ')
+        class_name = input()
+
+        if class_name == '1':
+            return class_name
+
+        if not subjects.check(class_name):
+            print(words.incorrect_input())
+            print()
+            continue
+        return class_name
+
+
 def edit_marks(db: ClassBook, full_name: str):
     while True:
         print(f'\n{words.select_action()}')
         print(tabulate([['1-Добавить или изменить оценку', '4-Оценка по предмету в конкретный день'],
                         ['2-Оценки за день', f'5-{words.back()}'],
                         ['3-Оценки по определённому предмету']]))
-        try:
-            choice = input()
 
-            if (not choice.isdigit()) or int(choice) > 5:
-                print(words.incorrect_input())
-                print()
-                continue
-            else:
-                choice = int(choice)
+        choice = input()
 
-            if choice == 1:
-                while True:
-                    print(f'Введите дату: (1-{words.back()})', end=' ')
-                    date = input()
+        if (not choice.isdigit()) or int(choice) > 5 or len(choice) != 1:
+            print(words.incorrect_input())
+            print()
+            continue
+        else:
+            choice = int(choice)
 
-                    if date == '1':
-                        break
-                    if not helper.check_date(date):
-                        print(words.incorrect_date())
-                        print()
-                        continue
-
-                    all_subjects = db.get_subjects(full_name)
-                    print('Введите предмет:')
-                    print(helper.format_subjects(all_subjects, words.back()))
-                    subject = input()
-
-                    if subject == '1':
-                        break
-                    if not (subject in all_subjects):
-                        print(words.incorrect_input())
-                        continue
-
-                    print(f'Введите оценку: (1-5 - оценка, 6-{words.back()})', end=' ')
-                    mark = input()
-
-                    if not mark.isdigit() or len(mark) != 1 or not (mark in ['1', '2', '3', '4', '5', '6']):
-                        print(words.incorrect_input())
-                        print()
-                        continue
-                    else:
-                        mark = int(mark)
-
-                    if mark == '6':
-                        break
-
-                    db.add_student_mark(full_name, date, subject, mark)
-                    print('Оценка успешно добавлена!')
+        if choice == 1:
+            while True:
+                date = enter_date()
+                if date == '1':
                     break
 
-            if choice == 2:
-                while True:
-                    print(f'Введите дату: (1-{words.back()})', end=' ')
-                    date = input()
-
-                    if date == '1':
-                        break
-                    if not helper.check_date(date):
-                        print(words.incorrect_date())
-                        print()
-                        continue
-
-                    all_marks = db.get_all_marks_by_date(full_name, date)
-                    result = ''
-
-                    for key in all_marks.keys():
-                        result += f'{key}: {all_marks[key]}\n'
-
-                    print(result)
+                subject = enter_subject(db, full_name)
+                if subject == '1':
                     break
 
-            if choice == 3:
-                while True:
-                    all_subjects = db.get_subjects(full_name)
-                    print('Введите предмет:')
-                    print(helper.format_subjects(all_subjects, words.back()))
-                    subject = input()
-
-                    if subject == '1':
-                        break
-                    if not (subject in all_subjects):
-                        print(words.incorrect_input())
-                        print('!')
-                        continue
-
-                    all_marks = db.get_all_marks(full_name, subject)
-                    print(helper.format_date_subject(all_marks))
+                mark = enter_mark()
+                if mark == 6:
                     break
 
-            if choice == 4:
-                while True:
-                    all_subjects = db.get_subjects(full_name)
-                    print('Введите предмет:')
-                    print(helper.format_subjects(all_subjects, words.back()))
-                    subject = input()
+                db.add_student_mark(full_name, date, subject, mark)
+                print('Оценка успешно добавлена!')
+                break
 
-                    if subject == '1':
-                        break
-                    if not (subject in all_subjects):
-                        print(words.incorrect_input())
-                        continue
-
-                    print(f'Введите дату: (1-{words.back()})', end=' ')
-                    date = input()
-
-                    if date == '1':
-                        break
-                    if not helper.check_date(date):
-                        print(words.incorrect_date())
-                        print()
-                        continue
-
-                    result = db.get_mark_subject_by_date(full_name, subject, date)
-                    print(result[0][0])
+        if choice == 2:
+            while True:
+                date = enter_date()
+                if date == '1':
                     break
 
-            if choice == 5:
-                return
-        except ValueError:
-            print(words.incorrect_input(), end=' ')
+                all_marks = db.get_all_marks_by_date(full_name, date)
+                result = ''
+
+                for key in all_marks.keys():
+                    result += f'{key}: {all_marks[key]}\n'
+
+                print(result)
+                break
+
+        if choice == 3:
+            while True:
+                subject = enter_subject(db, full_name)
+                if subject == '1':
+                    break
+
+                all_marks = db.get_all_marks(full_name, subject)
+                print(helper.format_date_subject(all_marks))
+                break
+
+        if choice == 4:
+            while True:
+                date = enter_date()
+                if date == '1':
+                    break
+
+                subject = enter_subject(db, full_name)
+                if subject == '1':
+                    break
+
+                result = db.get_mark_subject_by_date(full_name, subject, date)
+                print(result[0][0])
+                break
+
+        if choice == 5:
+            return
 
 
 def edit_student(db: ClassBook):
     while True:
         print(f'\n{words.select_action()}')
         print(tabulate(words.student_menu()))
-        try:
-            choice = input()
 
-            if (not choice.isdigit()) or int(choice) > 4:
-                print(words.incorrect_input())
-                print()
-                continue
-            else:
-                choice = int(choice)
+        choice = input()
 
-            if choice == 1:
-                while True:
-                    print(words.enter_full_name(), end=' ')
-                    full_name = input()
+        if (not choice.isdigit()) or int(choice) > 4 or len(choice) != 1:
+            print(words.incorrect_input())
+            print()
+            continue
+        else:
+            choice = int(choice)
 
-                    if full_name == '1':
-                        break
-
-                    if db.check_student_exists(full_name):
-                        print(words.student_already_added())
-                        break
-
-                    print(words.enter_class().format(subjects.get_classes()), end=' ')
-                    class_name = input()
-
-                    if class_name == '1':
-                        break
-
-                    if not subjects.check(class_name):
-                        print(words.incorrect_input())
-                        print()
-                        continue
-
-                    db.add_student(full_name, class_name)
-                    print(words.student_added())
+        if choice == 1:
+            while True:
+                fullname = enter_fullname(db, inverse=True)
+                if fullname == '1':
                     break
 
-            if choice == 2:
-                while True:
-                    print(words.enter_full_name(), end=' ')
-                    full_name = input()
-
-                    if full_name == '1':
-                        break
-
-                    if not db.check_student_exists(full_name):
-                        print(words.student_not_found())
-                        break
-
-                    edit_marks(db, full_name)
+                class_name = enter_class()
+                if class_name == '1':
                     break
 
-            if choice == 3:
-                while True:
-                    print(words.student_confirm(), end=' ')
-                    choice_rm = input()
+                db.add_student(fullname, class_name)
+                print(words.student_added())
+                break
 
-                    if choice_rm.lower() != words.yes().lower():
-                        break
-
-                    print(words.enter_full_name(), end=' ')
-                    full_name = input()
-
-                    if full_name == '1':
-                        break
-
-                    if not db.check_student_exists(full_name):
-                        print(words.student_not_found())
-                        break
-
-                    db.remove_student(full_name)
-                    print(words.student_removed())
+        if choice == 2:
+            while True:
+                fullname = enter_fullname(db)
+                if fullname == '1':
                     break
 
-            if choice == 4:
-                return
-        except ValueError:
-            print(words.incorrect_input(), end=' ')
+                edit_marks(db, fullname)
+                break
+
+        if choice == 3:
+            while True:
+                print(words.student_confirm(), end=' ')
+                choice_rm = input()
+                if choice_rm.lower() != words.yes().lower():
+                    break
+
+                fullname = enter_fullname(db, inverse=True)
+                if fullname == '1':
+                    break
+
+                db.remove_student(fullname)
+                print(words.student_removed())
+                break
+
+        if choice == 4:
+            return
 
 
 def run_school(school: str):
@@ -273,42 +280,40 @@ def run_school(school: str):
     while True:
         print(f'\n{words.select_action()}')
         print(tabulate(words.school_menu()))
-        try:
-            choice = input()
 
-            if (not choice.isdigit()) or int(choice) > 3:
-                print(words.incorrect_input())
-                print()
-                continue
-            else:
-                choice = int(choice)
+        choice = input()
 
-            if choice == 1:
-                edit_student(db)
+        if (not choice.isdigit()) or int(choice) > 3 or len(choice) != 1:
+            print(words.incorrect_input())
+            print()
+            continue
+        else:
+            choice = int(choice)
 
-            if choice == 2:
-                print(words.school_confirm().format(school_name), end=' ')
-                choice_rm = input()
+        if choice == 1:
+            edit_student(db)
 
-                if choice_rm.lower() == words.yes().lower():
-                    db.remove_school()
-                    db.close()
-                    print(words.school_deleted())
-                    return
-                else:
-                    print(words.school_not_deleted())
+        if choice == 2:
+            print(words.school_confirm().format(school_name), end=' ')
+            choice_rm = input()
 
-            if choice == 3:
+            if choice_rm.lower() == words.yes().lower():
+                db.remove_school()
                 db.close()
+                print(words.school_deleted())
                 return
-        except ValueError:
-            print(words.incorrect_input(), end=' ')
+            else:
+                print(words.school_not_deleted())
+
+        if choice == 3:
+            db.close()
+            return
 
 
 def sel_language():
     while True:
         print(f'Please, enter language ({phrases.get_langs()}):', end=' ')
-        lang = input()
+        lang = input().lower().replace(' ', '')
 
         if phrases.is_lang(lang):
             words = phrases.Phrases(lang)
