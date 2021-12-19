@@ -2,6 +2,7 @@ import logging
 import psycopg2
 from psycopg2 import Error
 import urllib.parse as up
+import helper
 import subjects
 
 
@@ -316,7 +317,7 @@ class ClassBook:
 
         student_id = cursor.fetchall()[0][0]
 
-        get_subjects_request = f'SELECT \"{subject}\" FROM \"{school}_У{student_id}\" WHERE id=\'{date}\''
+        get_subjects_request = f'SELECT \"{subject}\" FROM \"{school}_У{student_id}\" WHERE id=TO_DATE(\'{date}\', \'{helper.date_format()}\')'
         cursor.execute(get_subjects_request)
         return [i for i in cursor.fetchall()]
 
@@ -333,12 +334,18 @@ class ClassBook:
 
         student_id = cursor.fetchall()[0][0]
 
-        get_subjects_request = f'SELECT * FROM \"{school}_У{student_id}\" WHERE id=\'{date}\''
+        get_subjects_request = f'SELECT * FROM \"{school}_У{student_id}\"' \
+                               f'WHERE id=TO_DATE(\'{date}\',\'{helper.date_format()}\')'
         cursor.execute(get_subjects_request)
 
         subjects = self.get_subjects_by_id(student_id)
-        row = [i for i in cursor.fetchall()][0]
+        row = [i for i in cursor.fetchall()]
         result = {}
+
+        if len(row) == 0:
+            return result
+        else:
+            row = row[0]
 
         for i in range(1, len(row)):
             if row[i] is None:

@@ -3,6 +3,11 @@ import logging
 from tabulate import tabulate
 
 logger = logging.getLogger('helper')
+dformat = '%d.%m.%y'
+
+
+def date_format():
+    return dformat
 
 
 def is_school_name(name: str):
@@ -12,13 +17,11 @@ def is_school_name(name: str):
 
 
 def check_date(date):
-    format = '%d.%m.%y'
-
     try:
-        datetime.datetime.strptime(date, format)
+        datetime.datetime.strptime(date, dformat)
         return ''
     except ValueError as e:
-        logger.debug(f'Не правильный формат даты, нужен: {format}')
+        logger.debug(f'Не правильный формат даты, нужен: {dformat}')
         if str(e) == 'day is out of range for month':
             return 'OutOfRange'
         return 'ValueError'
@@ -26,13 +29,12 @@ def check_date(date):
 
 def format_date_subject(all_marks):
     result = ''
-    format = '%d.%m.%y'
 
     for mark in all_marks:
         if mark[1] is None:
             continue
 
-        date = mark[0].strftime(format)
+        date = mark[0].strftime(dformat)
         result += f'{date}: {mark[1]}\n'
     return result
 

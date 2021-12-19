@@ -181,6 +181,11 @@ def edit_marks(db: ClassBook, full_name: str):
                 all_marks = db.get_all_marks_by_date(full_name, date)
                 result = ''
 
+                if len(all_marks) == 0:
+                    result = 'Оценки за этот день не найдены'
+                    print(result)
+                    break
+
                 for key in all_marks.keys():
                     result += f'{key}: {all_marks[key]}\n'
 
